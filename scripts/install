@@ -13,10 +13,6 @@ source /usr/share/yunohost/helpers
 # MANAGE SCRIPT FAILURE
 #=================================================
 
-ynh_clean_setup () {
-	### Remove this function if there's nothing to clean before calling the remove script.
-	true
-}
 # Exit if an error occurs during the execution of the script
 ynh_abort_if_errors
 
@@ -25,11 +21,11 @@ ynh_abort_if_errors
 #=================================================
 
 domain=$YNH_APP_ARG_DOMAIN
-path_url=$YNH_APP_ARG_PATH
 admin=$YNH_APP_ARG_ADMIN
-is_public=$YNH_APP_ARG_IS_PUBLIC
 language=$YNH_APP_ARG_LANGUAGE
 password=$YNH_APP_ARG_PASSWORD
+account=$YNH_APP_ARG_ACCOUNT
+path_url='/'
 
 ### If it's a multi-instance app, meaning it can be installed several times independently
 ### The id of the app as stated in the manifest is available as $YNH_APP_ID
@@ -54,11 +50,11 @@ app=$YNH_APP_INSTANCE_NAME
 ### Use the execution time, given by --time, to estimate the weight of a step.
 ### A common way to do it is to set a weight equal to the execution time in second +1.
 ### The execution time is given for the duration since the previous call. So the weight should be applied to this previous call.
-ynh_script_progression --message="Validating installation parameters..." --time --weight=1
+ynh_script_progression --message="Validating installation parameters..."
 
 ### If the app uses nginx as web server (written in HTML/PHP in most cases), the final path should be "/var/www/$app".
 ### If the app provides an internal web server (or uses another application server such as uwsgi), the final path should be "/opt/yunohost/$app"
-final_path=/var/www/$app
+final_path=/opt/yunohost/$app
 test ! -e "$final_path" || ynh_die --message="This path already contains a folder"
 
 # Register (book) web path
@@ -67,20 +63,20 @@ ynh_webpath_register --app=$app --domain=$domain --path_url=$path_url
 #=================================================
 # STORE SETTINGS FROM MANIFEST
 #=================================================
-ynh_script_progression --message="Storing installation settings..." --time --weight=1
+ynh_script_progression --message="Storing installation settings..."
 
 ynh_app_setting_set --app=$app --key=domain --value=$domain
-ynh_app_setting_set --app=$app --key=path --value=$path_url
 ynh_app_setting_set --app=$app --key=admin --value=$admin
-ynh_app_setting_set --app=$app --key=is_public --value=$is_public
 ynh_app_setting_set --app=$app --key=language --value=$language
+ynh_app_setting_set --app=$app --key=is_public --value=1
+ynh_app_setting_set --app=$app --key=path --value=$path_url
 
 #=================================================
 # STANDARD MODIFICATIONS
 #=================================================
 # FIND AND OPEN A PORT
 #=================================================
-ynh_script_progression --message="Configuring firewall..." --time --weight=1
+ynh_script_progression --message="Configuring firewall..."
 
 ### Use these lines if you have to open a port for the application
 ### `ynh_find_port` will find the first available port starting from the given port.
@@ -99,24 +95,9 @@ ynh_app_setting_set --app=$app --key=port --value=$port
 # ynh_exec_warn_less yunohost firewall allow --no-upnp TCP $port
 
 #=================================================
-# INSTALL DEPENDENCIES
-#=================================================
-ynh_script_progression --message="Installing dependencies..." --time --weight=1
-
-### `ynh_install_app_dependencies` allows you to add any "apt" dependencies to the package.
-### Those deb packages will be installed as dependencies of this package.
-### If you're not using this helper:
-###		- Remove the section "REMOVE DEPENDENCIES" in the remove script
-###		- Remove the variable "pkg_dependencies" in _common.sh
-###		- As well as the section "REINSTALL DEPENDENCIES" in the restore script
-###		- And the section "UPGRADE DEPENDENCIES" in the upgrade script
-
-ynh_install_app_dependencies $pkg_dependencies
-
-#=================================================
 # CREATE A MYSQL DATABASE
 #=================================================
-ynh_script_progression --message="Creating a MySQL database..." --time --weight=1
+ynh_script_progression --message="Creating a MySQL database..."
 
 ### Use these lines if you need a database for the application.
 ### `ynh_mysql_setup_db` will create a database, an associated user and a ramdom password.
@@ -135,7 +116,7 @@ ynh_mysql_setup_db --db_user=$db_user --db_name=$db_name
 #=================================================
 # DOWNLOAD, CHECK AND UNPACK SOURCE
 #=================================================
-ynh_script_progression --message="Setting up source files..." --time --weight=1
+ynh_script_progression --message="Installing Offen binary..."
 
 ### `ynh_setup_source` is used to install an app from a zip or tar.gz file,
 ### downloaded from an upstream source, like a git repository.
@@ -143,12 +124,15 @@ ynh_script_progression --message="Setting up source files..." --time --weight=1
 
 ynh_app_setting_set --app=$app --key=final_path --value=$final_path
 # Download, check integrity, uncompress and patch the source from app.src
-ynh_setup_source --dest_dir="$final_path"
+
+offen_install_binary $final_path
+offen_bin=$(offen_get_binary $final_path)
+offen_envfile=$(offen_get_envfile)
 
 #=================================================
 # NGINX CONFIGURATION
 #=================================================
-ynh_script_progression --message="Configuring nginx web server..." --time --weight=1
+ynh_script_progression --message="Configuring nginx web server..."
 
 ### `ynh_add_nginx_config` will use the file conf/nginx.conf
 
@@ -158,40 +142,37 @@ ynh_add_nginx_config
 #=================================================
 # CREATE DEDICATED USER
 #=================================================
-ynh_script_progression --message="Configuring system user..." --time --weight=1
+ynh_script_progression --message="Configuring system user..."
 
 # Create a system user
 ynh_system_user_create --username=$app
 
 #=================================================
-# PHP-FPM CONFIGURATION
+# OFFEN SPECIFIC SETUP
 #=================================================
-ynh_script_progression --message="Configuring php-fpm..." --time --weight=1
+# 1. Create and populate a config file
+# 2. Run the setup command
+#=================================================
+ynh_script_progression --message="Setting up Offen..."
 
-### `ynh_add_fpm_config` is used to set up a PHP config.
-### You can remove it if your app doesn't use PHP.
-### `ynh_add_fpm_config` will use the files conf/php-fpm.conf
-### If you're not using these lines:
-###		- You can remove these files in conf/.
-###		- Remove the section "BACKUP THE PHP-FPM CONFIGURATION" in the backup script
-###		- Remove also the section "REMOVE PHP-FPM CONFIGURATION" in the remove script
-###		- As well as the section "RESTORE THE PHP-FPM CONFIGURATION" in the restore script
-###		With the reload at the end of the script.
-###		- And the section "PHP-FPM CONFIGURATION" in the upgrade script
+cat > $offen_envfile <<EOF
+OFFEN_APP_LOCALE="$language"
+OFFEN_DATABASE_DIALECT="mysql"
+OFFEN_DATABASE_CONNECTIONSTRING="$db_user:$db_pwd@tcp(localhost:3306)/$db_name?parseTime=true"
+OFFEN_SERVER_PORT="$port"
+OFFEN_SECRET="$($offen_bin secret -quiet)"
+OFFEN_SMTP_SENDER="noreply@$domain"
+EOF
 
-# Create a dedicated php-fpm config
-ynh_add_fpm_config
+# The command prints to stderr which YunoHost will consider a warning, so we
+# redirect to stdout instead.
+$offen_bin setup -email $admin -name "$account" -password $password 2>&1
 
-#=================================================
-# SPECIFIC SETUP
-#=================================================
-# ...
-#=================================================
 
 #=================================================
 # SETUP SYSTEMD
 #=================================================
-ynh_script_progression --message="Configuring a systemd service..." --time --weight=1
+ynh_script_progression --message="Configuring a systemd service..."
 
 ### `ynh_systemd_config` is used to configure a systemd script for an app.
 ### It can be used for apps that use sysvinit (with adaptation) or systemd.
@@ -207,45 +188,7 @@ ynh_script_progression --message="Configuring a systemd service..." --time --wei
 # Create a dedicated systemd config
 ynh_add_systemd_config
 
-#=================================================
-# SETUP APPLICATION WITH CURL
-#=================================================
-
-### Use these lines only if the app installation needs to be finalized through
-### web forms. We generally don't want to ask the final user,
-### so we're going to use curl to automatically fill the fields and submit the
-### forms.
-
-# Set right permissions for curl install
-chown -R $app: $final_path
-
-# Set the app as temporarily public for curl call
-ynh_script_progression --message="Configuring SSOwat..." --time --weight=1
-ynh_app_setting_set --app=$app --key=skipped_uris --value="/"
-# Reload SSOwat config
-yunohost app ssowatconf
-
-# Reload Nginx
-ynh_systemd_action --service_name=nginx --action=reload
-
-# Installation with curl
-ynh_script_progression --message="Finalizing installation..." --time --weight=1
-ynh_local_curl "/INSTALL_PATH" "key1=value1" "key2=value2" "key3=value3"
-
-# Remove the public access
-if [ $is_public -eq 0 ]
-then
-	ynh_app_setting_delete --app=$app --key=skipped_uris
-fi
-
-#=================================================
-# MODIFY A CONFIG FILE
-#=================================================
-
-### `ynh_replace_string` is used to replace a string in a file.
-### (It's compatible with sed regular expressions syntax)
-
-ynh_replace_string --match_string="match_string" --replace_string="replace_string" --target_file="$final_path/CONFIG_FILE"
+ynh_permission_update --permission "main" --add "visitors"
 
 #=================================================
 # STORE THE CONFIG FILE CHECKSUM
@@ -256,7 +199,7 @@ ynh_replace_string --match_string="match_string" --replace_string="replace_strin
 ### you can make a backup of this file before modifying it again if the admin had modified it.
 
 # Calculate and store the config file checksum into the app settings
-ynh_store_file_checksum --file="$final_path/CONFIG_FILE"
+ynh_store_file_checksum --file=$offen_envfile
 
 #=================================================
 # GENERIC FINALIZATION
@@ -274,7 +217,7 @@ chown -R root: $final_path
 #=================================================
 # SETUP LOGROTATE
 #=================================================
-ynh_script_progression --message="Configuring log rotation..." --time --weight=1
+ynh_script_progression --message="Configuring log rotation..."
 
 ### `ynh_use_logrotate` is used to configure a logrotate configuration for the logs of this app.
 ### Use this helper only if there is effectively a log file for this app.
@@ -290,9 +233,9 @@ ynh_use_logrotate
 #=================================================
 # INTEGRATE SERVICE IN YUNOHOST
 #=================================================
-ynh_script_progression --message="Integrating service in YunoHost..." --time --weight=1
+ynh_script_progression --message="Integrating service in YunoHost..."
 
-### `yunohost service add` integrates a service in YunoHost. It then gets 
+### `yunohost service add` integrates a service in YunoHost. It then gets
 ### displayed in the admin interface and through the others `yunohost service` commands.
 ### (N.B. : this line only makes sense if the app adds a service to the system!)
 ### If you're not using these lines:
@@ -301,7 +244,7 @@ ynh_script_progression --message="Integrating service in YunoHost..." --time --w
 ###		- As well as the section "INTEGRATE SERVICE IN YUNOHOST" in the restore script
 ###		- And the section "INTEGRATE SERVICE IN YUNOHOST" in the upgrade script
 
-yunohost service add $app --description "A short description of the app" --log "/var/log/$app/$app.log"
+yunohost service add $app --description "Offen - Fair web analytics" --log "/var/log/$app/$app.log"
 
 ### Additional options starting with 3.8:
 ###
@@ -323,7 +266,7 @@ yunohost service add $app --description "A short description of the app" --log "
 #=================================================
 # START SYSTEMD SERVICE
 #=================================================
-ynh_script_progression --message="Starting a systemd service..." --time --weight=1
+ynh_script_progression --message="Starting a systemd service..."
 
 ### `ynh_systemd_action` is used to start a systemd service for an app.
 ### Only needed if you have configure a systemd service
@@ -337,29 +280,9 @@ ynh_script_progression --message="Starting a systemd service..." --time --weight
 ynh_systemd_action --service_name=$app --action="start" --log_path="/var/log/$app/$app.log"
 
 #=================================================
-# SETUP FAIL2BAN
-#=================================================
-ynh_script_progression --message="Configuring fail2ban..." --time --weight=1
-
-# Create a dedicated fail2ban config
-ynh_add_fail2ban_config --logpath="/var/log/nginx/${domain}-error.log" --failregex="Regex to match into the log for a failed login"
-
-#=================================================
-# SETUP SSOWAT
-#=================================================
-ynh_script_progression --message="Configuring SSOwat..." --time --weight=1
-
-# Make app public if necessary
-if [ $is_public -eq 1 ]
-then
-	# unprotected_uris allows SSO credentials to be passed anyway.
-	ynh_app_setting_set --app=$app --key=unprotected_uris --value="/"
-fi
-
-#=================================================
 # RELOAD NGINX
 #=================================================
-ynh_script_progression --message="Reloading nginx web server..." --time --weight=1
+ynh_script_progression --message="Reloading nginx web server..."
 
 ynh_systemd_action --service_name=nginx --action=reload
 
@@ -367,4 +290,4 @@ ynh_systemd_action --service_name=nginx --action=reload
 # END OF SCRIPT
 #=================================================
 
-ynh_script_progression --message="Installation of $app completed" --time --last
+ynh_script_progression --message="Installation of $app completed" --last

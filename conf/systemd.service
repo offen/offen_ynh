@@ -1,13 +1,15 @@
 [Unit]
-Description=Small description of the service
+Description=Offen - Fair web analytics
 After=network.target
+After=mysql.service
+Requires=mysql.service
 
 [Service]
 Type=simple
 User=__APP__
 Group=__APP__
 WorkingDirectory=__FINALPATH__/
-ExecStart=__FINALPATH__/script >> /var/log/__APP__/__APP__.log 2>&1
+ExecStart=__FINALPATH__/offen
 
 [Install]
 WantedBy=multi-user.target
