@@ -1,7 +1,6 @@
 # Offen for YunoHost
 
-[![Integration level](https://dash.yunohost.org/integration/offen.svg)](https://dash.yunohost.org/appci/app/offen) ![](https://ci-apps.yunohost.org/ci/badges/offen.status.svg) ![](https://ci-apps.yunohost.org/ci/badges/offen.maintain.svg)  
-[![Install Offen with YunoHost](https://install-app.yunohost.org/install-with-yunohost.png)](https://install-app.yunohost.org/?app=offen)
+![Install Offen with YunoHost](https://install-app.yunohost.org/install-with-yunohost.png)
 
 > *This package allows you to install Offen quickly and simply on a YunoHost server.  
 If you don't have YunoHost, please consult [the guide](https://yunohost.org/#/install) to learn how to install it.*
@@ -16,7 +15,17 @@ Lightweight, self hosted and free.
 
 ## Screenshots
 
-![](Link to a screenshot of this app.)
+Operator facing Auditorium:
+
+![Operator facing Auditorium](https://offen.github.io/press-kit/offen-screenshots/offen_operator_01.png)
+
+User facing Auditorium:
+
+![User facing Auditorium](https://offen.github.io/press-kit/offen-screenshots/offen_user_01.png)
+
+Opt-in only data collection:
+
+![Opt-In](https://offen.github.io/press-kit/offen-screenshots/offen_banner_01.png)
 
 ## Demo
 
@@ -28,30 +37,20 @@ curl -sSL https://demo.offen.dev | bash
 
 ## Configuration
 
-How to configure this app: From an admin panel, a plain file with SSH, or any other way.
+Accounts and users can be managed from within Offen's admin panel.
 
 ## Documentation
 
  * Official documentation: https://docs.offen.dev
 
-## YunoHost specific features
-
-#### Multi-user support
-
-Are LDAP and HTTP auth supported?
-Can the app be used by multiple users?
-
 #### Supported architectures
 
-* x86-64 - [![Build Status](https://ci-apps.yunohost.org/ci/logs/offen%20%28Apps%29.svg)](https://ci-apps.yunohost.org/ci/apps/offen/)
+* x86-64
 
 ## Limitations
 
-* Any known limitations.
-
-## Additional information
-
-* Other info you would like to add about this app.
+* Offen needs to run on a dedicated subdomain.
+* Offen is public by default.
 
 **More info on the documentation page:**  
 https://yunohost.org/packaging_apps
