@@ -1,3 +1,7 @@
+<a href="https://offen.dev/">
+    <img src="https://offen.github.io/press-kit/offen-material/gfx-GitHub-Offen-logo.svg" alt="Offen logo" title="Offen" width="150px"/>
+</a>
+
 # Offen for YunoHost
 
 ![Install Offen with YunoHost](https://install-app.yunohost.org/install-with-yunohost.png)
