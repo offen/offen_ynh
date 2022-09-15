@@ -17,20 +17,6 @@ Lightweight, self hosted and free.
 
 **Shipped version:** 0.1.3
 
-## Screenshots
-
-Operator facing Auditorium:
-
-![Operator facing Auditorium](https://offen.github.io/press-kit/offen-screenshots/offen_operator_01.png)
-
-User facing Auditorium:
-
-![User facing Auditorium](https://offen.github.io/press-kit/offen-screenshots/offen_user_01.png)
-
-Opt-in only data collection:
-
-![Opt-In](https://offen.github.io/press-kit/offen-screenshots/offen_banner_01.png)
-
 ## Demo
 
 Run a local demo on your own machine:
