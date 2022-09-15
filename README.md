@@ -2,16 +2,16 @@
     <img src="https://offen.github.io/press-kit/offen-material/gfx-GitHub-Offen-logo.svg" alt="Offen logo" title="Offen" width="150px"/>
 </a>
 
-# Offen for YunoHost
+# Offen Fair Web Analytics for YunoHost
 
-![Install Offen with YunoHost](https://install-app.yunohost.org/install-with-yunohost.png)
+![Install Offen Fair Web Analytics with YunoHost](https://install-app.yunohost.org/install-with-yunohost.png)
 
-> *This package allows you to install Offen quickly and simply on a YunoHost server.  
+> *This package allows you to install Offen Fair Web Analytics quickly and simply on a YunoHost server.  
 If you don't have YunoHost, please consult [the guide](https://yunohost.org/#/install) to learn how to install it.*
 
 ## Overview
 
-Offen is an open alternative to common web analytics tools.
+Offen Fair Web Analytics is an open alternative to common web analytics tools.
 Gain insights while your users have full access to their data.
 Lightweight, self hosted and free.
 
@@ -41,7 +41,7 @@ curl -sSL https://demo.offen.dev | bash
 
 ## Configuration
 
-Accounts and users can be managed from within Offen's admin panel.
+Accounts and users can be managed from within Offen Fair Web Analytics's admin panel.
 
 ## Documentation
 
