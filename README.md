@@ -39,8 +39,8 @@ Accounts and users can be managed from within Offen Fair Web Analytics's admin p
 
 ## Limitations
 
-* Offen needs to run on a dedicated subdomain.
-* Offen is public by default.
+* Offen Fair Web Analytics needs to run on a dedicated subdomain.
+* Offen Fair Web Analytics is public by default.
 
 **More info on the documentation page:**  
 https://yunohost.org/packaging_apps
